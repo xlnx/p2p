@@ -1,4 +1,4 @@
-import Peer from "peerjs";
+import Peer, { DataConnection } from "peerjs";
 import type { PeerJSOption } from "peerjs";
 import { sign, hash } from "tweetnacl";
 import { decodeUTF8, encodeBase64 } from "tweetnacl-util";
@@ -40,6 +40,7 @@ interface P2POpts {
   peerOptions?: PeerJSOption;
   onError?: (error: PeerError) => void;
   onClose?: () => void;
+  acceptClient?: (client: DataConnection) => boolean;
 }
 
 /**
@@ -78,6 +79,7 @@ class P2PTransport extends Transport {
   private peerOptions: PeerJSOption;
   private onError: (error: PeerError) => void;
   private onClose: () => void;
+  private acceptClient: (client: DataConnection) => boolean;
   private isHost: boolean;
   private game: Game;
   private emit?: (data: ClientAction) => void;
@@ -89,6 +91,7 @@ class P2PTransport extends Transport {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     onError = () => {},
     onClose = () => {},
+    acceptClient = () => true,
     peerOptions = {},
     ...opts
   }: TransportOpts & P2POpts) {
@@ -96,6 +99,7 @@ class P2PTransport extends Transport {
     this.isHost = Boolean(isHost);
     this.onError = onError;
     this.onClose = onClose;
+    this.acceptClient = acceptClient;
     this.peerOptions = peerOptions;
     this.game = opts.game;
     this.retryHandler = new BackoffScheduler();
@@ -162,10 +166,15 @@ class P2PTransport extends Transport {
 
       // When a peer connects to the host, register it and set up event handlers.
       this.peer.on("connection", (client) => {
-        host.registerClient(client);
-        client.on("data", (data) => void host.processAction(data));
-        client.on("close", () => void host.unregisterClient(client));
-        window && window.addEventListener("beforeunload", () => client.close());
+        if (this.acceptClient(client)) {
+          host.registerClient(client);
+          client.on("data", (data) => void host.processAction(data));
+          client.on("close", () => void host.unregisterClient(client));
+          window &&
+            window.addEventListener("beforeunload", () => client.close());
+        } else {
+          client.close();
+        }
       });
       this.peer.on("error", this.onError);
       this.peer.on("close", this.onClose);

@@ -1,3 +1,4 @@
+import { DataConnection } from "peerjs";
 import type { PeerJSOption } from "peerjs";
 import { Transport } from "boardgame.io/internal";
 import type { ChatMessage, CredentialedActionShape, State } from "boardgame.io";
@@ -11,18 +12,20 @@ interface P2POpts {
     peerOptions?: PeerJSOption;
     onError?: (error: PeerError) => void;
     onClose?: () => void;
+    acceptClient?: (client: DataConnection) => boolean;
 }
 declare class P2PTransport extends Transport {
     private peer;
     private peerOptions;
     private onError;
     private onClose;
+    private acceptClient;
     private isHost;
     private game;
     private emit?;
     private retryHandler;
     private privateKey?;
-    constructor({ isHost, onError, onClose, peerOptions, ...opts }: TransportOpts & P2POpts);
+    constructor({ isHost, onError, onClose, acceptClient, peerOptions, ...opts }: TransportOpts & P2POpts);
     /** Synthesized peer ID for looking up this match’s host. */
     private get hostID();
     /** Keep credentials and encryption keys in sync. */

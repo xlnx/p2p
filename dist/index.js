@@ -56,12 +56,13 @@ class P2PTransport extends internal_1.Transport {
     constructor(_a) {
         var { isHost, 
         // eslint-disable-next-line @typescript-eslint/no-empty-function
-        onError = () => { }, onClose = () => { }, peerOptions = {} } = _a, opts = __rest(_a, ["isHost", "onError", "onClose", "peerOptions"]);
+        onError = () => { }, onClose = () => { }, acceptClient = () => true, peerOptions = {} } = _a, opts = __rest(_a, ["isHost", "onError", "onClose", "acceptClient", "peerOptions"]);
         super(opts);
         this.peer = null;
         this.isHost = Boolean(isHost);
         this.onError = onError;
         this.onClose = onClose;
+        this.acceptClient = acceptClient;
         this.peerOptions = peerOptions;
         this.game = opts.game;
         this.retryHandler = new BackoffScheduler();
@@ -114,10 +115,16 @@ class P2PTransport extends internal_1.Transport {
             });
             // When a peer connects to the host, register it and set up event handlers.
             this.peer.on("connection", (client) => {
-                host.registerClient(client);
-                client.on("data", (data) => void host.processAction(data));
-                client.on("close", () => void host.unregisterClient(client));
-                window && window.addEventListener("beforeunload", () => client.close());
+                if (this.acceptClient(client)) {
+                    host.registerClient(client);
+                    client.on("data", (data) => void host.processAction(data));
+                    client.on("close", () => void host.unregisterClient(client));
+                    window &&
+                        window.addEventListener("beforeunload", () => client.close());
+                }
+                else {
+                    client.close();
+                }
             });
             this.peer.on("error", this.onError);
             this.peer.on("close", this.onClose);
