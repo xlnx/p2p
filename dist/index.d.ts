@@ -10,17 +10,19 @@ interface P2POpts {
     isHost?: boolean;
     peerOptions?: PeerJSOption;
     onError?: (error: PeerError) => void;
+    onClose?: () => void;
 }
 declare class P2PTransport extends Transport {
     private peer;
     private peerOptions;
     private onError;
+    private onClose;
     private isHost;
     private game;
     private emit?;
     private retryHandler;
     private privateKey?;
-    constructor({ isHost, onError, peerOptions, ...opts }: TransportOpts & P2POpts);
+    constructor({ isHost, onError, onClose, peerOptions, ...opts }: TransportOpts & P2POpts);
     /** Synthesized peer ID for looking up this match’s host. */
     private get hostID();
     /** Keep credentials and encryption keys in sync. */

@@ -56,11 +56,12 @@ class P2PTransport extends internal_1.Transport {
     constructor(_a) {
         var { isHost, 
         // eslint-disable-next-line @typescript-eslint/no-empty-function
-        onError = () => { }, peerOptions = {} } = _a, opts = __rest(_a, ["isHost", "onError", "peerOptions"]);
+        onError = () => { }, onClose = () => { }, peerOptions = {} } = _a, opts = __rest(_a, ["isHost", "onError", "onClose", "peerOptions"]);
         super(opts);
         this.peer = null;
         this.isHost = Boolean(isHost);
         this.onError = onError;
+        this.onClose = onClose;
         this.peerOptions = peerOptions;
         this.game = opts.game;
         this.retryHandler = new BackoffScheduler();
@@ -119,6 +120,7 @@ class P2PTransport extends internal_1.Transport {
                 window && window.addEventListener("beforeunload", () => client.close());
             });
             this.peer.on("error", this.onError);
+            this.peer.on("close", this.onClose);
             this.onConnect();
         }
         else {
@@ -131,6 +133,7 @@ class P2PTransport extends internal_1.Transport {
                     this.onError(error);
                 }
             });
+            this.peer.on("close", this.onClose);
         }
     }
     /** Establish a connection to a remote host from a peer client. */

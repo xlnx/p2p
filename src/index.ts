@@ -39,6 +39,7 @@ interface P2POpts {
   isHost?: boolean;
   peerOptions?: PeerJSOption;
   onError?: (error: PeerError) => void;
+  onClose?: () => void;
 }
 
 /**
@@ -76,6 +77,7 @@ class P2PTransport extends Transport {
   private peer: Peer | null = null;
   private peerOptions: PeerJSOption;
   private onError: (error: PeerError) => void;
+  private onClose: () => void;
   private isHost: boolean;
   private game: Game;
   private emit?: (data: ClientAction) => void;
@@ -86,12 +88,14 @@ class P2PTransport extends Transport {
     isHost,
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     onError = () => {},
+    onClose = () => {},
     peerOptions = {},
     ...opts
   }: TransportOpts & P2POpts) {
     super(opts);
     this.isHost = Boolean(isHost);
     this.onError = onError;
+    this.onClose = onClose;
     this.peerOptions = peerOptions;
     this.game = opts.game;
     this.retryHandler = new BackoffScheduler();
@@ -164,6 +168,7 @@ class P2PTransport extends Transport {
         window && window.addEventListener("beforeunload", () => client.close());
       });
       this.peer.on("error", this.onError);
+      this.peer.on("close", this.onClose);
 
       this.onConnect();
     } else {
@@ -175,6 +180,7 @@ class P2PTransport extends Transport {
           this.onError(error);
         }
       });
+      this.peer.on("close", this.onClose);
     }
   }
 
