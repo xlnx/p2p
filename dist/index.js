@@ -127,7 +127,6 @@ class P2PTransport extends internal_1.Transport {
                 }
             });
             this.peer.on("error", this.onError);
-            this.peer.on("close", this.onClose);
             this.onConnect();
         }
         else {
@@ -140,7 +139,6 @@ class P2PTransport extends internal_1.Transport {
                     this.onError(error);
                 }
             });
-            this.peer.on("close", this.onClose);
         }
     }
     /** Establish a connection to a remote host from a peer client. */
@@ -154,6 +152,7 @@ class P2PTransport extends internal_1.Transport {
         host.on("open", () => void this.onConnect());
         // Apply updates received from the host.
         host.on("data", (data) => void this.notifyClient(data));
+        host.on("close", this.onClose);
         window && window.addEventListener("beforeunload", () => host.close());
     }
     /** Execute tasks once the connection to a remote or local host has been established. */

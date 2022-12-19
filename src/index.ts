@@ -177,7 +177,6 @@ class P2PTransport extends Transport {
         }
       });
       this.peer.on("error", this.onError);
-      this.peer.on("close", this.onClose);
 
       this.onConnect();
     } else {
@@ -189,7 +188,6 @@ class P2PTransport extends Transport {
           this.onError(error);
         }
       });
-      this.peer.on("close", this.onClose);
     }
   }
 
@@ -203,6 +201,7 @@ class P2PTransport extends Transport {
     host.on("open", () => void this.onConnect());
     // Apply updates received from the host.
     host.on("data", (data) => void this.notifyClient(data));
+    host.on("close", this.onClose);
     window && window.addEventListener("beforeunload", () => host.close());
   }
 
